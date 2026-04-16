@@ -29,15 +29,17 @@ export default function Home() {
   };
 
   const sendMessage = async () => {
-    if (!input || loading) return;
+    if (!input.trim() || loading) return;
 
-    const userMsg = { role: "user", text: input };
-    setMessages((prev) => [...prev, userMsg]);
+    const newMessages = [
+      ...messages,
+      { role: "user", text: input },
+      { role: "ai", text: "" } // ✅ placeholder added HERE
+    ];
+
+    setMessages(newMessages);
     setInput("");
     setLoading(true);
-
-    // placeholder AI message
-    setMessages((prev) => [...prev, { role: "ai", text: "" }]);
 
     try {
       const res = await fetch("/api/chat", {
@@ -46,8 +48,8 @@ export default function Home() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          message: input
-        }),
+          messages: newMessages
+        })
       });
 
       const data = await res.json();
@@ -69,24 +71,24 @@ export default function Home() {
       color: "#fff"
     }}>
 
-{/* HEADER */}
-<div style={{
-  padding: "15px 20px",
-  borderBottom: "1px solid #1e293b",
-  display: "flex",
-  alignItems: "center",
-  background: "#020617"
-}}>
-  <img
-    src="/logo.png"
-    alt="Marquey"
-    style={{
-      height: "48px",   // increase this (try 48–70)
-      width: "auto",
-      objectFit: "contain"
-    }}
-  />
-</div>
+      {/* HEADER */}
+      <div style={{
+        padding: "15px 20px",
+        borderBottom: "1px solid #1e293b",
+        display: "flex",
+        alignItems: "center",
+        background: "#020617"
+      }}>
+        <img
+          src="/logo.png"
+          alt="Marquey"
+          style={{
+            height: "60px",
+            width: "auto",
+            objectFit: "contain"
+          }}
+        />
+      </div>
 
       {/* CHAT AREA */}
       <div style={{
@@ -108,7 +110,6 @@ export default function Home() {
           >
             <div style={{
               background: m.role === "user" ? "#2563eb" : "#1e293b",
-              color: "#fff",
               padding: "12px 16px",
               borderRadius: "12px",
               maxWidth: "75%",
@@ -139,13 +140,17 @@ export default function Home() {
         gap: "10px",
         background: "#020617"
       }}>
-        <input
+        <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") sendMessage();
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // ✅ important
+              sendMessage();
+            }
           }}
           placeholder="Ask Marquey AI..."
+          rows={2}
           style={{
             flex: 1,
             padding: "12px",
@@ -153,7 +158,8 @@ export default function Home() {
             border: "none",
             outline: "none",
             background: "#1e293b",
-            color: "#fff"
+            color: "#fff",
+            resize: "none"
           }}
         />
 
